@@ -1,0 +1,45 @@
+if (app.documents.length != 0){
+    var myDoc = app.activeDocument;
+    MakeJPEGfile();
+} else {
+    alert("Please open a document and try again.");
+}
+
+function myPS() {
+    try {
+        return myDoc.selection[0].appliedParagraphStyle;
+    } catch (e) {
+        alert("Place cursor to text with paragraph style for filenames");
+        exit();
+    }
+}
+
+function MakeJPEGfile() {
+
+    app.jpegExportPreferences.jpegQuality = JPEGOptionsQuality.MAXIMUM;
+    app.jpegExportPreferences.useDocumentBleeds = true;
+    app.jpegExportPreferences.exportResolution = 300;
+    app.jpegExportPreferences.jpegExportRange = ExportRangeOrAllPages.exportRange;
+
+    app.findGrepPreferences = null;
+    app.findGrepPreferences.appliedParagraphStyle = myPS();
+
+    var f = myDoc.findGrep();
+
+    for (var myCounter = 0; myCounter < f.length; myCounter++) {
+        try {
+                var curPage = f[myCounter].parentTextFrames[0].parentPage;
+                if (curPage.appliedSection.name != "") {
+                    curPage.appliedSection.name = "";
+                }
+            
+                var objName = f[myCounter].contents.replace(/ /g,"_").toLowerCase();
+                app.jpegExportPreferences.pageString = curPage.name;
+                var myFilePath = myDoc.filePath + "/_slipsheet-jpgs/" + objName + ".jpg"; //export to a folder of the current document
+                var myFile = new File(myFilePath);
+                myDoc.exportFile(ExportFormat.jpg, myFile, false);
+            } catch(e) {
+            //pasteboard?
+            }
+    }
+}
